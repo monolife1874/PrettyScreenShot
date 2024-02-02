@@ -99,9 +99,9 @@ public:
         : QWidget(parent)
     {
         view = new ImageView;
-        //btnOK->setOpacity(1);
-        //btnOK->setWindowFlags(Qt::FramelessWindowHint);
 
+        //TODO:This will cause buttons hide
+        //view->setRenderer(ImageView::RendererType::OpenGL);
 
         int screenWidth = QApplication::desktop()->width();
         int screenHeight = QApplication::desktop()->height();
@@ -154,7 +154,12 @@ protected:
         delete btnVerticalAdd;
         btnVerticalAdd = nullptr;
     }
-
+    void keyPressEvent(QKeyEvent* event) {
+        if (event->key() == Qt::Key_Escape) {
+            this->showMinimized();
+        }
+        event->ignore();
+    }
     void mousePressEvent(QMouseEvent* event) override {
         start = event->pos();
         imageRect.setTopLeft(start);
