@@ -87,6 +87,8 @@ public:
     }
 };
 
+
+
 class QGrabScreenImage : public QWidget
 {
     Q_OBJECT
@@ -183,11 +185,19 @@ protected:
                 QRegion sub = regionRectAll.subtracted(regionRectShow);
                 this->setMask(sub);
                 imageRectShow = imageRect;
+                update();
             }          
         }
     }
 
     void paintEvent(QPaintEvent* event) override {
+        QPen pen;
+        pen.setStyle(Qt::PenStyle::DashLine);
+        pen.setColor(Qt::gray);
+        pen.setWidth(4);
+        QPainter painter(this);
+        painter.setPen(pen);
+        painter.drawRect(imageRect);
         //QPainter painter(this);
     }
 
