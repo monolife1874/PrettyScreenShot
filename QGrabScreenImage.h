@@ -11,6 +11,8 @@
 #include <QDesktopWidget>
 #include <QPushButton>
 #include <QQueue>
+#include <QFocusEvent>
+#include <windows.h>
 #include "ui_QGrabScreenImage.h"
 #include "ImageView.h"
 
@@ -62,7 +64,6 @@ public:
         height = 0;
         totalWidth = 0;
         totalHeight = 0;
-        vertical = false;
         images.clear();
     }
 
@@ -110,7 +111,7 @@ public:
             | Qt::FramelessWindowHint);
 
         this->setWindowOpacity(128 / 255.0);
-        this->setPalette(QPalette(QColor(20, 20, 50, 128)));
+        this->setPalette(QPalette(QColor(20, 20, 50, 20)));
         this->setAutoFillBackground(true);
 
         btnOK = new QPushButton("Ok", this);
@@ -131,10 +132,11 @@ public:
             | Qt::FramelessWindowHint);
         connect(btnVerticalAdd, &QPushButton::clicked, this, &QGrabScreenImage::onAdd);
 
+        imageStack = new ImageStack();
     }
     ~QGrabScreenImage()
     {
-
+        delete imageStack;
     }
 protected: 
     QPushButton* btnOK = nullptr;
@@ -162,11 +164,11 @@ protected:
         pressed = false;
         end = event->pos();
         if (moved()) {
-            btnOK->setGeometry(imageRect.bottomRight().x(), imageRect.bottomRight().y(), 60, 60);
+            btnOK->setGeometry(imageRect.bottomRight().x() - 60, imageRect.bottomRight().y(), 60, 30);
             btnOK->showNormal();
             btnOK->show();
 
-            btnVerticalAdd->setGeometry(imageRect.bottomRight().x() - 60, imageRect.bottomRight().y(), 60, 60);
+            btnVerticalAdd->setGeometry(imageRect.bottomRight().x() - 120, imageRect.bottomRight().y(), 60, 30);
             btnVerticalAdd->showNormal();
             btnVerticalAdd->show();
             //btnVerticalAdd
@@ -211,7 +213,7 @@ private:
     QPoint start;
     QPoint end;
     Ui::QGrabScreenImageClass ui;
-    ImageStack imageStack;
+    ImageStack* imageStack;
 
     bool moved() {
         return start != end;
@@ -227,9 +229,9 @@ private slots:
         btnOK->showMinimized();
         btnVerticalAdd->showMinimized();
 
-        if (imageStack.size() > 0) {
-            view->setImage(QPixmap::fromImage(imageStack.combine()));
-            imageStack.clear();
+        if (imageStack->size() > 0) {
+            view->setImage(QPixmap::fromImage(imageStack->combine()));
+            imageStack->clear();
         }
         else {
             view->setImage(pix);
@@ -243,6 +245,6 @@ private slots:
         QScreen* scr = QGuiApplication::primaryScreen();
         QPixmap pix = scr->grabWindow(0).copy(imageRectShow);
         QImage clipImage = pix.toImage();
-        imageStack.add(clipImage);
+        imageStack->add(clipImage);
     }
 };

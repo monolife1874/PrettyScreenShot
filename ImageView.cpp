@@ -124,7 +124,8 @@ void ImageView::onSave()
     p.setRenderHint(QPainter::HighQualityAntialiasing);
     //QPixmap map = this->grab();
     //image = map.toImage();
-    this->render(&p);
+    //this->render(&p);
+    scene()->render(&p);
     p.end();
     image.save("output.png");
 }
