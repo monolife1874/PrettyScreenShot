@@ -12,3 +12,5 @@ When saving an image, you can save both the entire image and the current view im
 When you drag and drop a screenshot window, the background update is still visible, which was also my initial goal for this project.
 
 This project is still ongoing, and a lot of work needs to be done, including but not limited to drawing functions, interface beautification, and more interactive functions that you can think of.
+
+This project was developed using Visual Studio and QT, so make sure to set up your QT path correctly
