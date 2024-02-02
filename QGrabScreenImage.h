@@ -10,8 +10,82 @@
 #include <QScreen>
 #include <QDesktopWidget>
 #include <QPushButton>
+#include <QQueue>
 #include "ui_QGrabScreenImage.h"
 #include "ImageView.h"
+
+class ImageStack {
+private:
+    int width = 0, height = 0;
+    int totalWidth = 0, totalHeight = 0;
+    bool vertical = false;
+    QQueue<QImage> images;
+public:
+    ImageStack(bool vertical = true) :vertical(vertical) {
+    
+    }
+
+    bool add(const QImage& image) {
+        if (image.isNull() || image.width() == 0 || image.height() == 0)
+            return false;
+        if (height == 0 || width == 0) {
+            height = image.height();
+            width = image.width();
+        }
+        else {
+            if (vertical && image.width() != width)
+                return false;
+            if (!vertical && image.height() != height)
+                return false;
+        }
+        //if (image.format() != QImage::Format_RGB888) {
+        //    return false;
+        //}
+        if (vertical) {
+            totalHeight += image.height();
+            totalWidth = width;
+        }
+        else {
+            totalWidth += image.width();
+            totalHeight = height;
+        }
+        images.append(image);
+        return true;
+    }
+
+    int size() {
+        return images.size();
+    }
+
+    void clear() {
+        width = 0;
+        height = 0;
+        totalWidth = 0;
+        totalHeight = 0;
+        vertical = false;
+        images.clear();
+    }
+
+    QImage combine() {
+
+        QImage imageOverlay = QImage(totalWidth, totalHeight, QImage::Format_RGB888);
+        QPainter painter(&imageOverlay);
+
+        int offset = 0;
+        for (auto it = images.begin(); it != images.end(); it++) {
+            QImage image = *it;
+            if (vertical) {
+                painter.drawImage(0, offset, image);
+                offset += image.height();
+            }
+            else {
+                painter.drawImage(offset, 0, image);
+                offset += image.width();
+            }
+        }
+        return imageOverlay;
+    }
+};
 
 class QGrabScreenImage : public QWidget
 {
@@ -37,14 +111,24 @@ public:
         this->setPalette(QPalette(QColor(20, 20, 50, 128)));
         this->setAutoFillBackground(true);
 
-        btnOK = new QPushButton(this);
+        btnOK = new QPushButton("Ok", this);
         btnOK->hide();
-        btnOK->setPalette(QPalette(QColor(20, 20, 50, 128)));
+        btnOK->setPalette(QPalette(QColor(200, 20, 50, 128)));
         btnOK->setAutoFillBackground(true);        
         btnOK->setWindowFlags(btnOK->windowFlags()
             | Qt::WindowStaysOnTopHint
             | Qt::FramelessWindowHint);
         connect(btnOK, &QPushButton::clicked, this, &QGrabScreenImage::onClip);
+
+        btnVerticalAdd = new QPushButton("Add", this);
+        btnVerticalAdd->hide();
+        btnVerticalAdd->setPalette(QPalette(QColor(200, 20, 50, 128)));
+        btnVerticalAdd->setAutoFillBackground(true);
+        btnVerticalAdd->setWindowFlags(/*btnVerticalAdd->windowFlags()
+            | */Qt::WindowStaysOnTopHint
+            | Qt::FramelessWindowHint);
+        connect(btnVerticalAdd, &QPushButton::clicked, this, &QGrabScreenImage::onAdd);
+
     }
     ~QGrabScreenImage()
     {
@@ -52,15 +136,19 @@ public:
     }
 protected: 
     QPushButton* btnOK = nullptr;
+    QPushButton* btnVerticalAdd = nullptr;
     ImageView* view = nullptr;
 
     void closeEvent(QCloseEvent* event) override {
         view->close();
         btnOK->close();
+        btnVerticalAdd->close();
         delete view;
         view = nullptr;
         delete btnOK;
         btnOK = nullptr;
+        delete btnVerticalAdd;
+        btnVerticalAdd = nullptr;
     }
 
     void mousePressEvent(QMouseEvent* event) override {
@@ -75,6 +163,11 @@ protected:
             btnOK->setGeometry(imageRect.bottomRight().x(), imageRect.bottomRight().y(), 60, 60);
             btnOK->showNormal();
             btnOK->show();
+
+            btnVerticalAdd->setGeometry(imageRect.bottomRight().x() - 60, imageRect.bottomRight().y(), 60, 60);
+            btnVerticalAdd->showNormal();
+            btnVerticalAdd->show();
+            //btnVerticalAdd
         }
     }
     void mouseMoveEvent(QMouseEvent* event) override {
@@ -83,6 +176,7 @@ protected:
             end = event->pos();
             if (moved()) {
                 btnOK->hide();
+                btnVerticalAdd->hide();
                 imageRect.setBottomRight(end);
                 regionRectAll.setRects(&this->rect(), 1);
                 regionRectShow.setRects(&imageRect, 1);
@@ -107,6 +201,7 @@ private:
     QPoint start;
     QPoint end;
     Ui::QGrabScreenImageClass ui;
+    ImageStack imageStack;
 
     bool moved() {
         return start != end;
@@ -120,10 +215,24 @@ private slots:
         clipImage.save("./img.bmp");
         this->showMinimized();
         btnOK->showMinimized();
+        btnVerticalAdd->showMinimized();
+
+        if (imageStack.size() > 0) {
+            view->setImage(QPixmap::fromImage(imageStack.combine()));
+            imageStack.clear();
+        }
+        else {
+            view->setImage(pix);
+        }
 
         view->move(start);
-        view->setImage(pix);
         view->setWindowFlags(view->windowFlags() | Qt::WindowStaysOnTopHint);
         view->showNormal();
+    }
+    void onAdd() {
+        QScreen* scr = QGuiApplication::primaryScreen();
+        QPixmap pix = scr->grabWindow(0).copy(imageRectShow);
+        QImage clipImage = pix.toImage();
+        imageStack.add(clipImage);
     }
 };
