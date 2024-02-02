@@ -59,9 +59,6 @@ void ImageView::setImage(QPixmap map)
     s->clear();
     s->addItem(item);
     s->setSceneRect(item->boundingRect()/*.adjusted(-10, -10, 10, 10)*/);
-    //this->adjustSize();;
-    //this->resize(s->width(),s->height());
-
 }
 
 void ImageView::setRenderer(RendererType type)
