@@ -87,7 +87,7 @@ public:
     }
 };
 
-
+//TODO:add 4 control bars, so user can adjust show region
 
 class QGrabScreenImage : public QWidget
 {
