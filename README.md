@@ -10,3 +10,5 @@ You can also enlarge the image at the pixel level and then perform geometric dra
 
 When saving an image, you can save both the entire image and the current view image, which means you can take a screenshot above it.
 When you drag and drop a screenshot window, the background update is still visible, which was also my initial goal for this project.
+
+This project is still ongoing, and a lot of work needs to be done, including but not limited to drawing functions, interface beautification, and more interactive functions that you can think of.
